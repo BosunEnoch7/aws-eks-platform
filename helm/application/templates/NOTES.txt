@@ -1,0 +1,8 @@
+The sample application has been rendered.
+
+Release: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
+Service: {{ include "platform-application.fullname" . }}
+
+If ingress is enabled, route traffic to one of the configured hosts after DNS
+points at the NGINX ingress load balancer.

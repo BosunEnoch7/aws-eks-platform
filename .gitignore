@@ -1,0 +1,62 @@
+# Terraform working data and sensitive state
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.plan
+backend.hcl
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Terraform variable files can contain account-specific or secret values
+*.tfvars
+*.tfvars.json
+!*.example.tfvars
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Kubernetes and local cluster access
+kubeconfig
+kubeconfig.*
+*.kubeconfig
+
+# AWS and container authentication must never be copied into the repository
+.aws/
+.docker/
+
+# Generated Helm and Kubernetes files containing local values
+secrets*.yaml
+secrets*.yml
+*-secret.yaml
+*-secret.yml
+
+# IDE and operating-system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local logs and temporary output
+*.log
+tmp/
+temp/
+
+# Python development artifacts
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/

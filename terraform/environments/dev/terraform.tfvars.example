@@ -1,0 +1,11 @@
+aws_region         = "eu-west-1"
+aws_profile        = "aws-eks-platform-dev"
+owner              = "Olatubosun Enoch David"
+vpc_cidr           = "10.0.0.0/16"
+single_nat_gateway = true
+
+# Replace both placeholders before planning. Never use 0.0.0.0/0.
+cluster_public_access_cidrs = ["203.0.113.10/32"]
+cluster_admin_principal_arn = "arn:aws:iam::123456789012:role/replace-with-federated-admin-role"
+
+node_instance_types = ["t3.medium"]

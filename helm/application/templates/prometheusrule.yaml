@@ -1,0 +1,47 @@
+{{- if and .Values.monitoring.enabled .Values.monitoring.prometheusRule.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "platform-application.fullname" . }}
+  labels:
+    {{- include "platform-application.labels" . | nindent 4 }}
+    {{- with .Values.monitoring.prometheusRule.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  groups:
+    - name: {{ include "platform-application.fullname" . }}.availability
+      rules:
+        - alert: PlatformApiHighErrorRate
+          expr: |
+            sum(rate(platform_api_http_requests_total{status=~"5.."}[5m]))
+            /
+            clamp_min(sum(rate(platform_api_http_requests_total[5m])), 1)
+            > 0.05
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: Platform API 5xx error rate is above 5%.
+            description: More than 5% of Platform API requests have returned 5xx for 10 minutes.
+        - alert: PlatformApiHighLatency
+          expr: |
+            histogram_quantile(
+              0.95,
+              sum(rate(platform_api_http_request_duration_seconds_bucket[5m])) by (le)
+            ) > 0.5
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: Platform API p95 latency is above 500ms.
+            description: Platform API p95 request latency has stayed above 500ms for 10 minutes.
+        - alert: PlatformApiNoTrafficMetrics
+          expr: absent(platform_api_http_requests_total)
+          for: 15m
+          labels:
+            severity: info
+          annotations:
+            summary: Platform API request metrics are absent.
+            description: Prometheus is not receiving Platform API request metrics.
+{{- end }}

@@ -1,0 +1,122 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.13"
+  TERRAFORM_VERSION: "1.14.8"
+
+jobs:
+  app-test:
+    name: application tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: |
+            app/requirements.txt
+            app/requirements-dev.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r app/requirements-dev.txt
+
+      - name: Run tests
+        env:
+          PYTHONPATH: app
+        run: python -m pytest app/tests -q
+
+  terraform-validate:
+    name: terraform validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform format
+        run: terraform fmt -check -recursive
+
+      - name: Init bootstrap without backend
+        working-directory: terraform/bootstrap
+        run: terraform init -backend=false
+
+      - name: Validate bootstrap
+        working-directory: terraform/bootstrap
+        run: terraform validate
+
+      - name: Init dev without backend
+        working-directory: terraform/environments/dev
+        run: terraform init -backend=false
+
+      - name: Validate dev
+        working-directory: terraform/environments/dev
+        run: terraform validate
+
+  kubernetes-validate:
+    name: kubernetes manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Install YAML parser
+        run: python -m pip install pyyaml
+
+      - name: Parse GitOps and platform YAML
+        run: python scripts/validate_yaml.py gitops platform
+
+      - name: Lint application chart
+        run: helm lint helm/application
+
+      - name: Render application chart
+        run: >
+          helm template aws-eks-platform-api helm/application
+          --namespace aws-eks-platform
+          --set image.repository=example.com/aws-eks-platform/application
+          --set image.tag=ci
+          --set serviceAccount.name=aws-eks-platform-api
+          --set serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn=arn:aws:iam::123456789012:role/example
+
+  docker-build:
+    name: docker build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build image without push
+        uses: docker/build-push-action@v6
+        with:
+          context: app
+          file: app/Dockerfile
+          push: false
+          tags: aws-eks-platform-api:ci

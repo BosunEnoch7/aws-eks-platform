@@ -1,0 +1,66 @@
+controller:
+  replicaCount: 2
+
+  ingressClass: nginx
+  ingressClassResource:
+    name: nginx
+    enabled: true
+    default: false
+    controllerValue: k8s.io/ingress-nginx
+
+  allowSnippetAnnotations: false
+
+  config:
+    allow-snippet-annotations: "false"
+    hsts: "true"
+    hsts-include-subdomains: "true"
+    server-tokens: "false"
+    ssl-redirect: "true"
+
+  service:
+    type: LoadBalancer
+    loadBalancerClass: service.k8s.aws/nlb
+    externalTrafficPolicy: Cluster
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+      service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+      service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol: TCP
+      service.beta.kubernetes.io/aws-load-balancer-attributes: deletion_protection.enabled=false
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+  minAvailable: 1
+
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: topology.kubernetes.io/zone
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: ingress-nginx
+          app.kubernetes.io/component: controller
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: false
+
+  admissionWebhooks:
+    enabled: true
+
+defaultBackend:
+  enabled: false
+

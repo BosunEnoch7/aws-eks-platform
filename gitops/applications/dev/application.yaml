@@ -1,0 +1,50 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aws-eks-platform-api
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: workloads
+  source:
+    repoURL: REPLACE_GITHUB_REPOSITORY_URL
+    targetRevision: main
+    path: helm/application
+    helm:
+      releaseName: aws-eks-platform-api
+      parameters:
+        - name: image.repository
+          value: REPLACE_WITH_ECR_REPOSITORY_URL
+        - name: image.tag
+          value: "0.1.0"
+        - name: serviceAccount.name
+          value: aws-eks-platform-api
+        - name: serviceAccount.annotations.eks\.amazonaws\.com/role-arn
+          value: REPLACE_APPLICATION_RUNTIME_ROLE_ARN
+        - name: externalSecret.enabled
+          value: "true"
+        - name: externalSecret.aws.region
+          value: eu-west-1
+        - name: externalSecret.aws.remoteKey
+          value: aws-eks-platform/dev/application/runtime
+        - name: monitoring.enabled
+          value: "true"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: aws-eks-platform
+  syncPolicy:
+    automated:
+      enabled: true
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ApplyOutOfSyncOnly=true
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: restricted
+        pod-security.kubernetes.io/audit: restricted
+        pod-security.kubernetes.io/warn: restricted

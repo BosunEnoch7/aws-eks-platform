@@ -1,0 +1,4 @@
+bucket  = "aws-eks-platform-tfstate-REPLACE_ACCOUNT_ID-eu-west-1"
+region  = "eu-west-1"
+profile = "aws-eks-platform-dev"
+

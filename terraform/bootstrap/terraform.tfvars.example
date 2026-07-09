@@ -1,0 +1,6 @@
+aws_region                 = "eu-west-1"
+aws_profile                = "aws-eks-platform-dev"
+owner                      = "Olatubosun Enoch David"
+monthly_budget_amount_usd  = 50
+budget_notification_email  = "replace-with-your-email@example.com"
+

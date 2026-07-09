@@ -1,0 +1,6 @@
+apiVersion: v2
+name: platform-application
+description: Helm chart for the sample AWS EKS platform workload
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
