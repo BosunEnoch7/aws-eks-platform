@@ -8,4 +8,4 @@ single_nat_gateway = true
 cluster_public_access_cidrs = ["203.0.113.10/32"]
 cluster_admin_principal_arn = "arn:aws:iam::123456789012:role/replace-with-federated-admin-role"
 
-node_instance_types = ["t3.medium"]
+node_instance_types = ["t3.small"]

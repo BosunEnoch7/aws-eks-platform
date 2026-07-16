@@ -20,10 +20,6 @@ the end.
 | [Incident notes template](incident-notes-template.md) | Incident timeline and follow-up template |
 | [Cost optimization guide](cost-optimization-guide.md) | Cost drivers and lab/production trade-offs |
 | [Production best practices](production-best-practices.md) | Controls required beyond a demo |
-| [Interview guide](interview-guide.md) | Architecture and trade-off discussion prompts |
-| [STAR stories](star-stories.md) | Evidence-based behavioural interview stories |
-| [Resume bullets](resume-bullets.md) | Concise, defensible project outcomes |
 | [Lessons learned](lessons-learned.md) | Technical discoveries and corrected assumptions |
 | [Future improvements](future-improvements.md) | Prioritised platform evolution |
-| [LinkedIn post](linkedin-post.md) | Public project narrative |
 | [Screenshots checklist](screenshots-checklist.md) | Proof required before claiming completion |

@@ -52,6 +52,27 @@ Thumbs.db
 tmp/
 temp/
 
+# Private career/interview materials must never be committed or pushed
+docs/interview-guide.md
+docs/interview-preparation*.md
+docs/*interview*.md
+docs/star-stories.md
+docs/*star*.md
+docs/linkedin-post.md
+docs/*linkedin*.md
+docs/resume-bullets.md
+docs/*resume*.md
+docs/*cv*.md
+docs/personal-notes*.md
+docs/recruiter*.md
+docs/job-application*.md
+private/
+private-docs/
+career/
+interview/
+linkedin/
+resume/
+
 # Python development artifacts
 .venv/
 venv/

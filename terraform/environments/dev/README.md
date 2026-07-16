@@ -12,7 +12,7 @@ EKS control plane, a managed system node group, and EKS-managed core add-ons.
 - One shared NAT gateway for development cost control
 - EKS nodes will use private subnets
 - EKS 1.35 with API-based access entries
-- One desired On-Demand `t3.medium` node for short live-demo windows
+- One desired On-Demand `t3.small` node for short live-demo windows
 - VPC CNI permissions isolated through IRSA
 - Immutable, scan-on-push ECR application repository
 

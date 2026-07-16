@@ -1,0 +1,113 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: aws-eks-platform
+  labels:
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/audit: baseline
+    pod-security.kubernetes.io/warn: baseline
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-eks-platform-api-config
+  namespace: aws-eks-platform
+data:
+  APP_NAME: aws-eks-platform-api
+  APP_ENV: dev
+  APP_MESSAGE: Hello from Amazon EKS
+  READINESS_ENABLED: "true"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: aws-eks-platform-api
+  namespace: aws-eks-platform
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aws-eks-platform-api
+  namespace: aws-eks-platform
+  labels:
+    app.kubernetes.io/name: aws-eks-platform-api
+    app.kubernetes.io/part-of: aws-eks-platform
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: aws-eks-platform-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: aws-eks-platform-api
+        app.kubernetes.io/part-of: aws-eks-platform
+    spec:
+      serviceAccountName: aws-eks-platform-api
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: api
+          image: 637739133052.dkr.ecr.eu-west-1.amazonaws.com/aws-eks-platform/application:0.1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: aws-eks-platform-api-config
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aws-eks-platform-api
+  namespace: aws-eks-platform
+  labels:
+    app.kubernetes.io/name: aws-eks-platform-api
+    app.kubernetes.io/part-of: aws-eks-platform
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: aws-eks-platform-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

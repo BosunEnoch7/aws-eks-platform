@@ -1,137 +1,369 @@
 # AWS EKS Platform
 
 `aws-eks-platform` is a production-inspired Kubernetes platform on Amazon EKS.
-It demonstrates how a platform team provisions infrastructure, packages
-workloads, delivers immutable releases through GitOps, secures workload access
-to AWS, and operates the resulting system.
+It demonstrates how a platform engineering team can provision cloud
+infrastructure, package applications, deliver releases through GitOps, secure
+workload access to AWS, and operate Kubernetes with observability and cost
+guardrails.
 
-> Status: Offline platform build complete through Phase 14. AWS planning and
-> provisioning remain blocked on identity verification and budget guardrails.
+> Publishing gate: this repository is not ready to push until screenshot
+> evidence is collected in `docs/images/` and displayed in this README.
 
-## Owner
+## Project Overview
 
-Olatubosun Enoch David
+This project models a realistic AWS Kubernetes platform rather than a basic EKS
+tutorial. The goal is to show end-to-end platform thinking:
 
-## Platform objectives
+- Terraform-managed AWS infrastructure
+- Amazon EKS for managed Kubernetes
+- Amazon ECR for container images
+- Helm for reusable workload packaging
+- Argo CD for GitOps delivery
+- NGINX Ingress and AWS Load Balancer integration
+- HPA, probes, network policies, and pod security controls
+- Prometheus, Grafana, Alertmanager, and CloudWatch observability
+- GitHub Actions for CI validation and release automation
+- Security and cost-conscious operating practices
 
-- Provision AWS infrastructure reproducibly with Terraform.
-- Run containerized workloads on Amazon EKS managed node groups.
-- Store immutable application images in Amazon ECR.
-- Package Kubernetes workloads with Helm.
-- Separate continuous integration from Argo CD-based continuous delivery.
-- Expose applications through an AWS NLB and NGINX Ingress.
-- Use IRSA and AWS Secrets Manager for least-privilege secret access.
-- Implement Kubernetes security, autoscaling, observability, and operational
-  documentation.
+## Architecture Diagram
 
-## Architecture
+The platform flow is:
 
-The initial design and its responsibility boundaries are documented in:
+```text
+Developer
+   |
+   v
+GitHub
+   |
+   v
+GitHub Actions
+   |
+   +--> Docker Build/Test
+   |
+   +--> Amazon ECR
+   |
+   v
+GitOps Desired State
+   |
+   v
+Argo CD
+   |
+   v
+Amazon EKS
+   |
+   v
+NGINX Ingress / AWS Load Balancer
+   |
+   v
+Kubernetes Service
+   |
+   v
+Application Pods
+   |
+   +--> Prometheus --> Grafana
+   |
+   +--> Alertmanager
+   |
+   +--> CloudWatch Logs
+```
 
-- [Architecture overview](architecture/diagrams/platform-architecture.md)
-- [ADR-001: EKS platform operating model](architecture/decisions/ADR-001-eks-platform-operating-model.md)
-- [ADR-005: Ingress and controller ownership](architecture/decisions/ADR-005-ingress-and-controller-ownership.md)
-- [ADR-006: Workload security and secrets model](architecture/decisions/ADR-006-workload-security-and-secrets-model.md)
-- [ADR-007: Autoscaling and resilience baseline](architecture/decisions/ADR-007-autoscaling-and-resilience-baseline.md)
-- [ADR-008: Observability baseline](architecture/decisions/ADR-008-observability-baseline.md)
-- [ADR-009: CI/CD and release automation](architecture/decisions/ADR-009-ci-cd-and-release-automation.md)
+Detailed architecture notes are maintained in
+[architecture/diagrams/platform-architecture.md](architecture/diagrams/platform-architecture.md)
+and the ADRs under [architecture/decisions](architecture/decisions).
 
-## Repository structure
+## Screenshot Evidence
+
+Screenshot evidence is mandatory before this repository is pushed to GitHub.
+Evidence must be stored in `docs/images/` and displayed here.
+
+Required evidence includes:
+
+- Terraform apply success
+- EKS cluster and node group
+- ECR image repository
+- Kubernetes resources from `kubectl`
+- Application running
+- GitHub Actions success
+- Helm release output
+- Argo CD dashboard
+- Prometheus targets
+- Grafana dashboard
+- Alertmanager
+- CloudWatch logs
+
+Current status: screenshots are not yet collected, so the repository must not
+be pushed.
+
+## Technologies Used and Why
+
+| Technology | Why it is used |
+|---|---|
+| AWS | Provides the cloud foundation for networking, compute, identity, logging, and container registry services. |
+| Amazon EKS | Runs Kubernetes while AWS manages the control plane lifecycle. |
+| Amazon ECR | Stores immutable Docker images close to EKS and integrates with IAM. |
+| Terraform | Provisions infrastructure reproducibly and makes architecture reviewable. |
+| Docker | Packages the sample API into a portable container image. |
+| Kubernetes | Provides workload orchestration, service discovery, rollout control, and autoscaling. |
+| Helm | Templates Kubernetes resources into a reusable application package. |
+| Argo CD | Keeps cluster state synchronized from Git and separates CI from deployment authority. |
+| GitHub Actions | Runs validation, tests, image build, and release automation. |
+| NGINX Ingress | Provides HTTP routing inside Kubernetes. |
+| AWS Load Balancer Controller | Integrates Kubernetes ingress/service resources with AWS load balancers. |
+| IRSA | Grants AWS permissions to Kubernetes service accounts without static credentials. |
+| AWS Secrets Manager | Keeps runtime secrets outside Git. |
+| Prometheus/Grafana/Alertmanager | Provides metrics collection, dashboards, and alert routing. |
+| CloudWatch | Captures AWS and EKS operational logs. |
+
+## Project Structure
 
 ```text
 .
 |-- .github/workflows/       CI, validation, and release workflows
-|-- app/                     Sample application source, tests, and image definition
+|-- app/                     Sample FastAPI application, tests, and Dockerfile
 |-- architecture/
 |   |-- decisions/           Architecture Decision Records
-|   `-- diagrams/            Platform and request-flow diagrams
-|-- docs/                    Deployment, operations, security, and career documentation
-|-- gitops/
-|   |-- applications/        Argo CD application definitions
-|   |-- bootstrap/           Minimum resources needed to establish GitOps
-|   `-- environments/        Desired state for each environment
-|-- helm/application/        Reusable application Helm chart
-|-- platform/                Cluster-wide controllers and operational add-ons
-|-- policies/                Network and workload security policies
-|-- screenshots/             Curated implementation evidence
-|-- scripts/                 Small repeatable operator commands
+|   `-- diagrams/            Platform architecture notes
+|-- docs/                    Public deployment, operations, security, and evidence docs
+|-- docs/images/             Screenshot evidence required before publishing
+|-- gitops/                  Argo CD projects, bootstrap, and applications
+|-- helm/application/        Application Helm chart
+|-- k8s/                     Lightweight live-validation manifest
+|-- monitoring/              Monitoring documentation and references
+|-- platform/                Cluster add-ons and controller values
+|-- scripts/                 Local validation and operator helper scripts
 |-- terraform/
-|   |-- bootstrap/           Terraform state and initial trust resources
+|   |-- bootstrap/           Remote state and budget/bootstrap foundation
 |   |-- environments/        Environment composition
-|   `-- modules/             Reusable infrastructure modules
-`-- tests/                   Infrastructure, Kubernetes, and smoke tests
+|   `-- modules/             Reusable AWS infrastructure modules
+`-- tests/                   Test and validation assets
 ```
 
-Directories intentionally contain placeholder files until their implementation
-phase. This keeps the planned ownership boundaries visible without prematurely
-adding code.
+## Infrastructure Design
 
-## Delivery model
+The Terraform design is split into reusable modules:
 
-```text
-Developer -> GitHub -> GitHub Actions -> ECR
-                                      -> Git desired state
-                                             |
-                                             v
-                                          Argo CD
-                                             |
-                                             v
-                                             EKS
-```
+- `vpc`: public/private subnets, routing, internet gateway, and NAT pattern
+- `ecr`: container registry and lifecycle policy
+- `eks`: EKS control plane, managed node group, add-ons, IAM roles, OIDC, and access entries
+- `platform-iam`: controller IAM roles and policies
+- `workload-security`: application runtime secret metadata and IRSA permissions
 
-GitHub Actions will build and validate artifacts. Argo CD will be the normal
-authority that deploys workloads. CI will not directly apply production
-manifests to the cluster.
+The dev environment is intentionally cost-conscious:
 
-## Planned phases
+- one managed node group
+- `t3.small` nodes for learning/demo use
+- single NAT Gateway instead of one NAT per Availability Zone
+- restricted EKS public endpoint CIDR
+- explicit budget guardrails
 
-1. Platform concepts and architecture
-2. Repository and architecture foundation
-3. AWS and local-tool prerequisites
-4. Terraform remote state and provider foundation - apply deferred
-5. VPC and networking
-6. ECR, IAM, and EKS **(offline implementation complete)**
-7. Platform controllers and ingress **(offline implementation complete)**
-8. Sample application and Helm chart **(offline implementation complete)**
-9. GitOps with Argo CD **(offline implementation complete)**
-10. Security, secrets, and network policies **(offline implementation complete)**
-11. Autoscaling and resilience **(offline implementation complete)**
-12. Monitoring, alerting, and logging **(offline implementation complete)**
-13. CI, validation, and release automation **(offline implementation complete)**
-14. Operational testing and final documentation **(offline implementation complete)**
+## Features
 
-## Offline validation
+- Modular Terraform infrastructure
+- Remote-state bootstrap design
+- EKS managed node group
+- ECR repository and lifecycle policy
+- FastAPI sample service with health, readiness, version, and metrics endpoints
+- Docker image build workflow
+- Helm chart with Deployment, Service, Ingress, HPA, PDB, NetworkPolicy, ConfigMap, ServiceMonitor, and PrometheusRule
+- Argo CD GitOps application definitions
+- IRSA-based workload access to AWS services
+- CloudWatch observability add-on
+- Prometheus/Grafana/Alertmanager platform design
+- Public-safe documentation and runbooks
+- Cost-safety handoff after live validation attempts
 
-Run the local validation helper from the repository root:
+## Deployment Guide
+
+Read the full guide at [docs/deployment-guide.md](docs/deployment-guide.md).
+
+High-level workflow:
 
 ```powershell
-.\scripts\local_validate.ps1
+cd terraform/bootstrap
+terraform init
+terraform plan
+terraform apply
+
+cd ../environments/dev
+terraform init -reconfigure -backend-config=backend.hcl
+terraform plan
+terraform apply
 ```
 
-If Terraform has not been initialized yet, run:
+After EKS is active:
 
 ```powershell
-terraform -chdir=terraform/environments/dev init -backend=false
+aws eks update-kubeconfig `
+  --name aws-eks-platform-dev `
+  --region eu-west-1 `
+  --profile aws-eks-platform-dev `
+  --role-arn arn:aws:iam::637739133052:role/aws-eks-platform-eks-cluster-admin
+
+kubectl get nodes
+kubectl get pods -A
 ```
 
-This validation does not create AWS resources.
+## Local Development Guide
 
-Each phase is reviewed and approved before the next phase begins.
+The sample application lives in [app](app).
 
-## Current safety gate
+```powershell
+cd app
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt -r requirements-dev.txt
+pytest
+```
 
-No AWS resources have been created yet. Before running `terraform plan` or
-`terraform apply`, this project needs:
+Build the image:
 
-1. an authenticated AWS CLI profile,
-2. confirmation of the AWS account/identity being used,
-3. a budget alert email address,
-4. confirmation or replacement of the current `$50/month` budget target.
+```powershell
+docker build -t aws-eks-platform-api:local ./app
+```
 
-This keeps the platform production-inspired without turning the learning
-environment into a surprise bill generator. Very unglamorous. Very necessary.
+## CI/CD Pipeline
 
-## Documentation
+GitHub Actions is responsible for:
 
-See the [documentation index](docs/README.md) for the planned guides,
-runbooks, interview material, and evidence checklist.
+- linting and testing the application
+- validating Terraform formatting
+- validating YAML/Kubernetes manifests
+- building the Docker image
+- pushing release images to ECR
+- updating GitOps image references
+
+Argo CD is responsible for deployment. This separation matters because CI
+should produce verified artifacts, while GitOps should own cluster state.
+
+## Monitoring and Observability
+
+The monitoring design includes:
+
+- Prometheus for metrics collection
+- Grafana for dashboards
+- Alertmanager for alert routing
+- ServiceMonitor and PrometheusRule templates in the Helm chart
+- CloudWatch for EKS control-plane and container log visibility
+
+See [docs/observability-guide.md](docs/observability-guide.md).
+
+## Security
+
+Security controls include:
+
+- no committed credentials, `.env` files, Terraform state, or kubeconfigs
+- restricted EKS API endpoint CIDR
+- IAM Roles for Service Accounts instead of static AWS keys
+- AWS Secrets Manager as the external secret source
+- non-root containers
+- read-only root filesystem where practical
+- dropped Linux capabilities
+- liveness and readiness probes
+- Kubernetes NetworkPolicy templates
+- public documentation only in Git
+
+See [docs/security-guide.md](docs/security-guide.md).
+
+## Cost Optimization
+
+The project is designed for short-lived validation rather than always-on lab
+usage. Main cost drivers are:
+
+- EKS control plane
+- NAT Gateway
+- EC2 worker node
+- load balancers
+- CloudWatch log ingestion/storage
+
+Cost controls:
+
+- use a single NAT Gateway for dev
+- keep node count low
+- tear down live infrastructure after evidence capture
+- use AWS Budgets
+- avoid leaving load balancers running
+
+See [docs/cost-optimization-guide.md](docs/cost-optimization-guide.md).
+
+## Troubleshooting Guide
+
+The project includes troubleshooting documentation for:
+
+- AWS identity/profile issues
+- Terraform backend/state drift
+- EKS endpoint CIDR lockout
+- `kubectl` context mistakes
+- pod scheduling and rollout failures
+- CloudWatch/observability injection conflicts
+- cost-safety cleanup
+
+See [docs/troubleshooting-guide.md](docs/troubleshooting-guide.md) and
+[docs/live-validation-handoff.md](docs/live-validation-handoff.md).
+
+## Live Validation Status
+
+Live AWS validation was attempted in `eu-west-1`.
+
+Validated:
+
+- AWS identity/profile
+- Terraform bootstrap foundation
+- ECR image push
+- EKS infrastructure creation path
+- cost-safety cleanup checks
+
+Blocked:
+
+- final Kubernetes application proof and screenshots
+
+Root cause:
+
+- CloudTrail showed `aws-eks-platform-dev` was deleted by an AWS CLI
+  `eks.delete-cluster` command from the `bosun-admin` user during validation.
+
+Current cost-safety status:
+
+- no project EKS cluster
+- no project NAT Gateway
+- no project Elastic IP
+- no project EC2 instance
+- no project load balancer
+
+## Lessons Learned
+
+- EKS endpoint CIDR restrictions are secure, but operator IP changes can break access.
+- Terraform state drift must be handled carefully after manual cloud deletion.
+- Cost control is part of platform engineering, not an afterthought.
+- GitOps should own deployments; CI should build and validate artifacts.
+- Observability add-ons can mutate workloads and interact with Pod Security Admission.
+- Recruiter-ready repositories need evidence, not just code.
+
+## Future Improvements
+
+- Add real screenshot evidence under `docs/images/`
+- Complete final live Kubernetes rollout after stopping external delete commands
+- Add automated smoke tests after Argo CD sync
+- Add OPA/Kyverno policy checks
+- Add external DNS and TLS automation
+- Add environment promotion workflow
+- Add disaster recovery and backup validation
+
+## Repository Safety Notice
+
+Private career materials are intentionally excluded from Git:
+
+- interview guides
+- STAR stories
+- LinkedIn posts/guides
+- resume/CV content
+- recruiter messages
+- job application notes
+- personal notes
+
+Do not push this repository until:
+
+- screenshot evidence exists in `docs/images/`
+- README displays the evidence
+- private documents remain untracked
+- Terraform state/plan files are absent from Git
+- secrets scan is clean
